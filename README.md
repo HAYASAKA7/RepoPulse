@@ -54,6 +54,27 @@ npm run preview
    - Switch between weekly/monthly/yearly commit views
    - Adjust the time period to see more or less history
 
+## 📸 Markdown Embedding API
+You can embed your beautiful hand-drawn repository status directly into markdown files (like a GitHub README) as an image. This requires deploying the backend server, which uses Playwright/Puppeteer to generate accurate screenshots of the UI.
+
+1. **Start the backend server**:
+   ```bash
+   npm run build
+   npm run server
+   ```
+
+2. **Embed anywhere using markdown syntax**: 
+   ```markdown
+   ![React RepoPulse Stats](https://your-domain.com/api/status?repo=owner/repo)
+   ```
+
+3. **Customize the commit chart period**:
+   You can tweak the timeframe rendered in the chart by querying `period` (weekly, monthly, or yearly) and `count`.
+   ```markdown
+   <!-- Show the last 5 years -->
+   ![React Status](https://your-domain.com/api/status?repo=owner/repo&period=yearly&count=5)
+   ```
+
 ## 🛠️ Tech Stack
 - **React 19** - UI framework
 - **TypeScript** - Type safety

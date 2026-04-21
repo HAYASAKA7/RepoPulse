@@ -1,0 +1,94 @@
+import express from 'express';
+import puppeteer from 'puppeteer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+// The port for our Express server
+const PORT = process.env.PORT || 3000;
+// Where the Vite frontend is running or served from
+// If we are serving the built frontend from express, we might use the local port
+const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
+
+// Serve the static frontend files if they exist in dist/
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+app.get('/api/status', async (req, res) => {
+  const { repo, period, count } = req.query;
+
+  if (!repo) {
+    return res.status(400).send('Missing repo parameter. Provide ?repo=owner/repo');
+  }
+
+  try {
+    console.log(`Generating screenshot for ${repo}...`);
+    // Launch headless browser
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
+    const page = await browser.newPage();
+    
+    // Set a good default viewport size for the embed
+    await page.setViewport({ width: 1000, height: 1200, deviceScaleFactor: 2 });
+    
+    // Navigate to the frontend with embed mode
+    let targetUrl = `${FRONTEND_URL}/?repo=${repo}&mode=embed`;
+    if (period) targetUrl += `&period=${period}`;
+    if (count) targetUrl += `&count=${count}`;
+    console.log(`Navigating to ${targetUrl}...`);
+    
+    await page.goto(targetUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+
+    // Wait for the repo content container to appear and no longer be loading
+    await page.waitForSelector('#repo-content', { timeout: 10000 });
+    
+    // Wait for the loader to disappear, ensuring data is fetched
+    await page.waitForFunction(() => {
+      const el = document.querySelector('#repo-content');
+      // If we see the sketching loader, it's not ready
+      if (document.body.innerText.includes('Sketching')) return false;
+      // If it has children and doesn't say "Enter a repository", it's ready
+      if (el && el.innerText && el.innerText.includes('Oops!')) return true; // Error case
+      if (el && el.innerText && el.innerText.includes('No commit history')) return true; // Empty case
+      if (el && el.innerText.length > 50) return true; // Data case
+      return false;
+    }, { timeout: 15000 }).catch(e => console.log('Wait timeout or completed.'));
+
+    // Select the content element
+    const element = await page.$('#repo-content');
+    
+    if (!element) {
+      throw new Error('Could not find #repo-content on the page');
+    }
+
+    // Take the screenshot
+    const screenshotBuffer = await element.screenshot({ type: 'png' });
+    
+    await browser.close();
+
+    // Send the screenshot as PNG image
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.send(screenshotBuffer);
+    
+  } catch (error) {
+    console.error(`Error generating status image for ${repo}:`, error);
+    res.status(500).send('Error generating status image');
+  }
+});
+
+// Fallback to index.html for SPA routing if serving statically
+app.use((req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Test endpoint: http://localhost:${PORT}/api/status?repo=facebook/react`);
+});

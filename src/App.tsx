@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Star, GitFork, Eye, Tag, MagnifyingGlass, WarningCircle, ArrowClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,16 +23,45 @@ function App() {
   const [periodType, setPeriodType] = useState<TimePeriod>('monthly')
   const [periodCount, setPeriodCount] = useState(12)
   const [isChangingPeriod, setIsChangingPeriod] = useState(false)
+  const [isEmbedMode, setIsEmbedMode] = useState(false)
 
   const periodConfig: PeriodConfig = { type: periodType, count: periodCount }
 
-  const handleSearch = async () => {
-    if (!input.trim()) {
-      toast.error('Please enter a repository')
-      return
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const repoParam = params.get('repo')
+    const modeParam = params.get('mode')
+    const periodParam = params.get('period') as TimePeriod | null
+    const countParam = params.get('count')
+
+    if (modeParam === 'embed') {
+      setIsEmbedMode(true)
     }
 
-    const parsed = parseRepoInput(input)
+    let initialPeriodConfig = periodConfig
+
+    if (periodParam && ['weekly', 'monthly', 'yearly'].includes(periodParam)) {
+      setPeriodType(periodParam)
+      initialPeriodConfig.type = periodParam
+    }
+
+    if (countParam) {
+      const parsedCount = parseInt(countParam, 10)
+      if (!isNaN(parsedCount) && parsedCount > 0) {
+        setPeriodCount(parsedCount)
+        initialPeriodConfig.count = parsedCount
+      }
+    }
+
+    if (repoParam) {
+      setInput(repoParam)
+      // Small timeout to ensure state is set before search
+      setTimeout(() => executeSearch(repoParam, initialPeriodConfig), 0)
+    }
+  }, [])
+
+  const executeSearch = async (searchQuery: string, pConfig = periodConfig) => {
+    const parsed = parseRepoInput(searchQuery)
     if (!parsed) {
       toast.error('Invalid format. Try: owner/repo or GitHub URL')
       return
@@ -48,7 +77,7 @@ function App() {
     try {
       const [repo, commits, contribs, langs] = await Promise.all([
         fetchRepoData(parsed.owner, parsed.repo),
-        fetchCommitActivity(parsed.owner, parsed.repo, periodConfig),
+        fetchCommitActivity(parsed.owner, parsed.repo, pConfig),
         fetchContributors(parsed.owner, parsed.repo),
         fetchLanguages(parsed.owner, parsed.repo),
       ])
@@ -57,14 +86,22 @@ function App() {
       setCommitData(commits)
       setContributors(contribs)
       setLanguages(langs)
-      toast.success('Repository data loaded!')
+      if (!isEmbedMode) toast.success('Repository data loaded!')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch repository'
       setError(errorMessage)
-      toast.error(errorMessage)
+      if (!isEmbedMode) toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSearch = () => {
+    if (!input.trim()) {
+      toast.error('Please enter a repository')
+      return
+    }
+    executeSearch(input)
   }
 
   const handlePeriodTypeChange = async (newType: TimePeriod) => {
@@ -116,18 +153,21 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen paper-texture">
-      <div className="container mx-auto px-4 sm:px-8 py-8">
-        <header className="mb-8 text-center">
-          <h1 className="text-5xl font-bold font-handwritten text-primary mb-2" style={{ transform: 'rotate(-1deg)' }}>
-            RepoPulse Sketch
-          </h1>
-          <p className="text-lg font-handwritten text-muted-foreground">
-            Visualize GitHub repository stats in hand-drawn style
-          </p>
-        </header>
+    <div className={`min-h-screen paper-texture ${isEmbedMode ? 'py-4' : ''}`}>
+      <div className={`container mx-auto px-4 sm:px-8 ${isEmbedMode ? 'py-0' : 'py-8'}`} id="repo-content">
+        {!isEmbedMode && (
+          <header className="mb-8 text-center">
+            <h1 className="text-5xl font-bold font-handwritten text-primary mb-2" style={{ transform: 'rotate(-1deg)' }}>
+              RepoPulse Sketch
+            </h1>
+            <p className="text-lg font-handwritten text-muted-foreground">
+              Visualize GitHub repository stats in hand-drawn style
+            </p>
+          </header>
+        )}
 
-        <div className="max-w-2xl mx-auto mb-12">
+        {!isEmbedMode && (
+          <div className="max-w-2xl mx-auto mb-12">
           <SketchCard>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
@@ -148,11 +188,12 @@ function App() {
                 Search
               </Button>
             </div>
-            <p className="text-xs font-handwritten text-muted-foreground mt-3 text-center">
-              Try: facebook/react or https://github.com/vercel/next.js
-            </p>
-          </SketchCard>
-        </div>
+              <p className="text-xs font-handwritten text-muted-foreground mt-3 text-center">
+                Try: facebook/react or https://github.com/vercel/next.js
+              </p>
+            </SketchCard>
+          </div>
+        )}
 
         {isLoading && <SketchingLoader />}
 
@@ -220,65 +261,67 @@ function App() {
 
             {commitData.length > 0 && (
               <SketchCard className="animate-wobble-in" delay={400}>
-                <div className="mb-6 space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <h3 className="text-xl font-bold font-handwritten text-primary">
-                      Time Period
-                    </h3>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handlePeriodTypeChange('weekly')}
-                        disabled={isChangingPeriod}
-                        variant={periodType === 'weekly' ? 'default' : 'outline'}
-                        className="font-handwritten"
-                      >
-                        Weekly
-                      </Button>
-                      <Button
-                        onClick={() => handlePeriodTypeChange('monthly')}
-                        disabled={isChangingPeriod}
-                        variant={periodType === 'monthly' ? 'default' : 'outline'}
-                        className="font-handwritten"
-                      >
-                        Monthly
-                      </Button>
-                      <Button
-                        onClick={() => handlePeriodTypeChange('yearly')}
-                        disabled={isChangingPeriod}
-                        variant={periodType === 'yearly' ? 'default' : 'outline'}
-                        className="font-handwritten"
-                      >
-                        Yearly
-                      </Button>
+                {!isEmbedMode && (
+                  <div className="mb-6 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <h3 className="text-xl font-bold font-handwritten text-primary">
+                        Time Period
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handlePeriodTypeChange('weekly')}
+                          disabled={isChangingPeriod}
+                          variant={periodType === 'weekly' ? 'default' : 'outline'}
+                          className="font-handwritten"
+                        >
+                          Weekly
+                        </Button>
+                        <Button
+                          onClick={() => handlePeriodTypeChange('monthly')}
+                          disabled={isChangingPeriod}
+                          variant={periodType === 'monthly' ? 'default' : 'outline'}
+                          className="font-handwritten"
+                        >
+                          Monthly
+                        </Button>
+                        <Button
+                          onClick={() => handlePeriodTypeChange('yearly')}
+                          disabled={isChangingPeriod}
+                          variant={periodType === 'yearly' ? 'default' : 'outline'}
+                          className="font-handwritten"
+                        >
+                          Yearly
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="text-sm font-handwritten font-bold text-muted-foreground">
+                        Number of {periodType === 'yearly' ? 'Years' : periodType === 'weekly' ? 'Weeks' : 'Months'}:
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="period-count"
+                          type="number"
+                          min="1"
+                          max={periodType === 'yearly' ? '10' : periodType === 'weekly' ? '52' : '24'}
+                          value={periodCount}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value)
+                            if (!isNaN(val) && val > 0) {
+                              handleCountChange(val)
+                            }
+                          }}
+                          disabled={isChangingPeriod}
+                          className="w-20 font-mono border-2 border-secondary focus:border-accent transition-colors"
+                        />
+                        <span className="text-xs font-handwritten text-muted-foreground">
+                          (1-{periodType === 'yearly' ? '10' : periodType === 'weekly' ? '52' : '24'})
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-wrap items-center gap-3">
-                    <label className="text-sm font-handwritten font-bold text-muted-foreground">
-                      Number of {periodType === 'yearly' ? 'Years' : periodType === 'weekly' ? 'Weeks' : 'Months'}:
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id="period-count"
-                        type="number"
-                        min="1"
-                        max={periodType === 'yearly' ? '10' : periodType === 'weekly' ? '52' : '24'}
-                        value={periodCount}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value)
-                          if (!isNaN(val) && val > 0) {
-                            handleCountChange(val)
-                          }
-                        }}
-                        disabled={isChangingPeriod}
-                        className="w-20 font-mono border-2 border-secondary focus:border-accent transition-colors"
-                      />
-                      <span className="text-xs font-handwritten text-muted-foreground">
-                        (1-{periodType === 'yearly' ? '10' : periodType === 'weekly' ? '52' : '24'})
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                )}
                 <SketchChart
                   data={commitData}
                   title={getChartTitle()}
@@ -304,12 +347,12 @@ function App() {
             )}
 
             {contributors.length > 0 && (
-              <ContributorLeaderboard contributors={contributors} />
+              <ContributorLeaderboard contributors={isEmbedMode ? contributors.slice(0, 3) : contributors} />
             )}
           </div>
         )}
 
-        {!repoData && !isLoading && !error && (
+        {!repoData && !isLoading && !error && !isEmbedMode && (
           <div className="text-center py-16">
             <p className="text-2xl font-handwritten text-muted-foreground" style={{ transform: 'rotate(-0.5deg)' }}>
               Enter a repository to begin sketching...
