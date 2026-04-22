@@ -123,3 +123,5 @@ Notes:
 - `server/index.js` serves the built frontend from `dist/` and exposes `/api/status`.
 - Use a paid Render web service if you need it to stay always on.
 - If you change the Render URL later, update `FRONTEND_URL`.
+
+Render note: the web service build now installs Chrome with Puppeteer, because Render does not ship a browser binary by default.

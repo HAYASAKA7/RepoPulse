@@ -14,6 +14,8 @@ const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
+const CHROME_PATH = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH || process.env.PUPPETEER_CHROME_PATH;
+
 function getPublicBaseUrl(req) {
   if (process.env.FRONTEND_URL) {
     return process.env.FRONTEND_URL;
@@ -36,6 +38,7 @@ app.get('/api/status', async (req, res) => {
     // Launch headless browser
     const browser = await puppeteer.launch({
       headless: 'new',
+      executablePath: CHROME_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
