@@ -10,6 +10,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 // The port for our Express server
 const PORT = process.env.PORT || 3000;
+const IMAGE_CACHE_TTL_MS = 1000 * 60 * 60;
+const imageCache = new Map();
 
 // Serve the static frontend files if they exist in dist/
 const distPath = path.join(__dirname, '../dist');
@@ -45,6 +47,14 @@ app.get('/api/status', async (req, res) => {
     return res.status(400).send('Missing repo parameter. Provide ?repo=owner/repo');
   }
 
+  const cacheKey = `${repo}|${period || ''}|${count || ''}`;
+  const cached = imageCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(cached.buffer);
+  }
+
   try {
     console.log(`Generating screenshot for ${repo}...`);
     // Launch headless browser
@@ -52,13 +62,14 @@ app.get('/api/status', async (req, res) => {
     const browser = await puppeteer.launch({
       headless: 'new',
       executablePath: CHROME_PATH || builtChromePath || undefined,
+      protocolTimeout: 120000,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
     const page = await browser.newPage();
     
     // Set a good default viewport size for the embed
-    await page.setViewport({ width: 1000, height: 1200, deviceScaleFactor: 2 });
+    await page.setViewport({ width: 1000, height: 1200, deviceScaleFactor: 1 });
     
     // Navigate to the frontend with embed mode
     const frontendUrl = getPublicBaseUrl(req);
@@ -92,9 +103,21 @@ app.get('/api/status', async (req, res) => {
     }
 
     // Take the screenshot
-    const screenshotBuffer = await element.screenshot({ type: 'png' });
+    const screenshotBuffer = await element.screenshot({
+      type: 'png',
+      captureBeyondViewport: false,
+    });
     
     await browser.close();
+
+    imageCache.set(cacheKey, {
+      buffer: screenshotBuffer,
+      expiresAt: Date.now() + IMAGE_CACHE_TTL_MS,
+    });
+    if (imageCache.size > 100) {
+      const oldestKey = imageCache.keys().next().value;
+      if (oldestKey) imageCache.delete(oldestKey);
+    }
 
     // Send the screenshot as PNG image
     res.setHeader('Content-Type', 'image/png');
