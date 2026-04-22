@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: repopulse
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    autoDeploy: true
+    envVars:
+      - key: FRONTEND_URL
+        value: https://repopulse.onrender.com
+      - key: VITE_GITHUB_TOKEN
+        sync: false

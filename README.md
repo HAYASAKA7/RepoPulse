@@ -103,3 +103,23 @@ MIT License - feel free to use this project for personal or commercial purposes!
 
 ## 🤝 Contributing
 Contributions are welcome! Feel free to open issues or submit pull requests.
+
+## Render Deployment
+This repo is ready for a single Render web service that serves the frontend and the image API.
+
+1. Push the repo to GitHub.
+2. In Render, create a new **Web Service** from this repo.
+3. Use these settings:
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm run start`
+4. Add environment variables:
+   - `FRONTEND_URL` = your Render service URL, for example `https://repopulse.onrender.com`
+   - `VITE_GITHUB_TOKEN` = your GitHub Personal Access Token
+5. Deploy, then test:
+   - Frontend: `https://your-service.onrender.com`
+   - Image API: `https://your-service.onrender.com/api/status?repo=facebook/react`
+
+Notes:
+- `server/index.js` serves the built frontend from `dist/` and exposes `/api/status`.
+- Use a paid Render web service if you need it to stay always on.
+- If you change the Render URL later, update `FRONTEND_URL`.
