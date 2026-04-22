@@ -129,3 +129,5 @@ Render note: the web service build now installs Chrome with Puppeteer, because R
 Render note: Puppeteer now uses a service-local cache dir (`PUPPETEER_CACHE_DIR=/opt/render/project/src/.cache/puppeteer`) so the Chrome download survives within the service filesystem.
 
 Render note: the build now installs Chrome into `/opt/render/project/src/.cache/puppeteer`, and the server points Puppeteer at that exact executable path.
+
+Render note: the build writes the exact Chrome executable path to `.cache/puppeteer/chrome-path.txt`, and the server reads that file at runtime.

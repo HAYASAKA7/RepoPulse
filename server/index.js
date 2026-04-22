@@ -1,5 +1,6 @@
 import express from 'express';
 import puppeteer from 'puppeteer';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -16,14 +17,16 @@ app.use(express.static(distPath));
 
 const CHROME_PATH = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH || process.env.PUPPETEER_CHROME_PATH;
 const PUPPETEER_CACHE_DIR = process.env.PUPPETEER_CACHE_DIR || path.join(process.cwd(), '.cache', 'puppeteer');
-const PUPPETEER_CHROME_BUILD = process.env.PUPPETEER_CHROME_BUILD || '147.0.7727.57';
-const FALLBACK_CHROME_PATH = path.join(
-  PUPPETEER_CACHE_DIR,
-  'chrome',
-  `linux-${PUPPETEER_CHROME_BUILD}`,
-  'chrome-linux64',
-  'chrome'
-);
+const CHROME_PATH_FILE = path.join(PUPPETEER_CACHE_DIR, 'chrome-path.txt');
+
+function getBuiltChromePath() {
+  try {
+    const value = fs.readFileSync(CHROME_PATH_FILE, 'utf8').trim();
+    return value || null;
+  } catch {
+    return null;
+  }
+}
 
 function getPublicBaseUrl(req) {
   if (process.env.FRONTEND_URL) {
@@ -45,9 +48,10 @@ app.get('/api/status', async (req, res) => {
   try {
     console.log(`Generating screenshot for ${repo}...`);
     // Launch headless browser
+    const builtChromePath = getBuiltChromePath();
     const browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: CHROME_PATH || FALLBACK_CHROME_PATH,
+      executablePath: CHROME_PATH || builtChromePath || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
