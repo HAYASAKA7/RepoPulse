@@ -38,7 +38,7 @@ app.get('/api/status', async (req, res) => {
     // Launch headless browser
     const browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: CHROME_PATH || undefined,
+      executablePath: CHROME_PATH || puppeteer.executablePath(),
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     

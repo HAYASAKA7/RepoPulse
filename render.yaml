@@ -7,5 +7,7 @@ services:
     startCommand: npm run start
     autoDeploy: true
     envVars:
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/src/.cache/puppeteer
       - key: VITE_GITHUB_TOKEN
         sync: false
