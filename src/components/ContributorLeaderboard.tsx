@@ -20,7 +20,7 @@ export function ContributorLeaderboard({ contributors }: ContributorLeaderboardP
       case 3:
         return <Medal size={24} weight="fill" className="text-accent opacity-60" />
       default:
-        return <span className="font-mono font-bold text-muted-foreground">#{rank}</span>
+        return <span className="font-handwritten font-bold text-muted-foreground">#{rank}</span>
     }
   }
 
@@ -75,7 +75,7 @@ export function ContributorLeaderboard({ contributors }: ContributorLeaderboardP
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-mono font-semibold text-foreground group-hover:text-accent transition-colors truncate">
+                    <p className="font-handwritten font-semibold text-foreground group-hover:text-accent transition-colors truncate">
                       {contributor.login}
                     </p>
                     <div className="flex items-center gap-2">
@@ -97,7 +97,7 @@ export function ContributorLeaderboard({ contributors }: ContributorLeaderboardP
                   </div>
 
                   <div className="text-right">
-                    <p className="text-lg font-mono font-bold text-secondary">
+                    <p className="text-lg font-handwritten font-bold text-secondary">
                       {formatNumber(contributor.contributions)}
                     </p>
                     <p className="text-xs font-handwritten text-muted-foreground">

@@ -113,7 +113,7 @@ export function SketchChart({ data, title }: SketchChartProps) {
           })
 
           ctx.globalAlpha = scale
-          ctx.font = '12px JetBrains Mono'
+          ctx.font = '12px Indie Flower'
           ctx.fillStyle = 'oklch(0.35 0.01 270)'
           ctx.textAlign = 'center'
           ctx.fillText(data[i].month, point[0], height - padding.bottom + 20)
@@ -127,7 +127,7 @@ export function SketchChart({ data, title }: SketchChartProps) {
       const y = padding.top + (chartHeight / yAxisSteps) * i
       const value = Math.round(maxValue * (1 - i / yAxisSteps))
       
-      ctx.font = '12px JetBrains Mono'
+      ctx.font = '12px Indie Flower'
       ctx.fillStyle = 'oklch(0.35 0.01 270)'
       ctx.textAlign = 'right'
       ctx.fillText(value.toString(), padding.left - 10, y + 4)

@@ -69,7 +69,7 @@ export async function fetchRepoData(owner: string, repo: string): Promise<RepoDa
     description: data.description || 'No description available',
     stars: data.stargazers_count,
     forks: data.forks_count,
-    watchers: data.watchers_count,
+    watchers: data.subscribers_count,
     latestRelease,
     owner,
     repo,

@@ -198,7 +198,7 @@ export function LanguageChart({ data, title }: LanguageChartProps) {
           ctx.textAlign = 'left'
           ctx.fillText(lang.name, legendX + 30, legendY)
 
-          ctx.font = '12px JetBrains Mono'
+          ctx.font = '12px Indie Flower'
           ctx.fillStyle = 'oklch(0.45 0.02 260)'
           ctx.fillText(`${lang.percentage.toFixed(1)}%`, legendX + 180, legendY)
           
@@ -217,7 +217,7 @@ export function LanguageChart({ data, title }: LanguageChartProps) {
         ctx.fillStyle = 'oklch(0.45 0.02 260)'
         ctx.fillText(`+ ${data.length - 5} more`, legendX, legendY)
         
-        ctx.font = '12px JetBrains Mono'
+        ctx.font = '12px Indie Flower'
         ctx.fillText(`${othersPercentage.toFixed(1)}%`, legendX + 180, legendY)
         ctx.globalAlpha = 1
       }

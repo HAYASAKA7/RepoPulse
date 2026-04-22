@@ -177,7 +177,7 @@ function App() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 font-mono border-2 border-secondary focus:border-accent transition-colors"
+                className="flex-1 font-handwritten border-2 border-secondary focus:border-accent transition-colors"
               />
               <Button
                 onClick={handleSearch}
@@ -223,7 +223,7 @@ function App() {
           <div className="space-y-8">
             <SketchCard className="animate-wobble-in">
               <div>
-                <h2 className="text-3xl font-bold font-mono text-primary mb-2">
+                <h2 className="text-3xl font-bold font-handwritten text-primary mb-2">
                   {repoData.fullName}
                 </h2>
                 <p className="font-handwritten text-lg text-muted-foreground">
@@ -313,7 +313,7 @@ function App() {
                             }
                           }}
                           disabled={isChangingPeriod}
-                          className="w-20 font-mono border-2 border-secondary focus:border-accent transition-colors"
+                          className="w-20 font-handwritten border-2 border-secondary focus:border-accent transition-colors"
                         />
                         <span className="text-xs font-handwritten text-muted-foreground">
                           (1-{periodType === 'yearly' ? '10' : periodType === 'weekly' ? '52' : '24'})

@@ -18,7 +18,7 @@ export function StatCard({ icon, label, value, delay = 0 }: StatCardProps) {
           {icon}
         </div>
         <div className="text-center">
-          <p className="text-3xl font-bold font-mono text-secondary mb-1">
+          <p className="text-3xl font-bold font-handwritten text-secondary mb-1">
             {formattedValue}
           </p>
           <p className="text-sm font-handwritten text-muted-foreground">
