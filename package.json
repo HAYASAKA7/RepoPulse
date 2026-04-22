@@ -11,7 +11,7 @@
         "lint": "eslint .",
         "optimize": "vite optimize",
         "preview": "vite preview",
-        "start": "node server/index.js",
+        "start": "node scripts/render-start.mjs",
         "server": "node server/index.js"
     },
     "dependencies": {

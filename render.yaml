@@ -3,7 +3,7 @@ services:
     name: repopulse
     env: node
     plan: starter
-    buildCommand: npm install && export PUPPETEER_CACHE_DIR=/opt/render/project/src/.cache/puppeteer && CHROME_PATH=$(npx puppeteer browsers install chrome --path=$PUPPETEER_CACHE_DIR --format='{{path}}') && mkdir -p $PUPPETEER_CACHE_DIR && printf '%s' \"$CHROME_PATH\" > $PUPPETEER_CACHE_DIR/chrome-path.txt && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run start
     autoDeploy: true
     envVars:
