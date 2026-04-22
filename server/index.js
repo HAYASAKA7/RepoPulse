@@ -15,6 +15,15 @@ const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
 const CHROME_PATH = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH || process.env.PUPPETEER_CHROME_PATH;
+const PUPPETEER_CACHE_DIR = process.env.PUPPETEER_CACHE_DIR || path.join(process.cwd(), '.cache', 'puppeteer');
+const PUPPETEER_CHROME_BUILD = process.env.PUPPETEER_CHROME_BUILD || '147.0.7727.57';
+const FALLBACK_CHROME_PATH = path.join(
+  PUPPETEER_CACHE_DIR,
+  'chrome',
+  `linux-${PUPPETEER_CHROME_BUILD}`,
+  'chrome-linux64',
+  'chrome'
+);
 
 function getPublicBaseUrl(req) {
   if (process.env.FRONTEND_URL) {
@@ -38,7 +47,7 @@ app.get('/api/status', async (req, res) => {
     // Launch headless browser
     const browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: CHROME_PATH || puppeteer.executablePath(),
+      executablePath: CHROME_PATH || FALLBACK_CHROME_PATH,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
