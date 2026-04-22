@@ -105,7 +105,6 @@ app.get('/api/status', async (req, res) => {
     // Take the screenshot
     const screenshotBuffer = await element.screenshot({
       type: 'png',
-      captureBeyondViewport: false,
     });
     
     await browser.close();

@@ -135,3 +135,5 @@ Render note: the build writes the exact Chrome executable path to `.cache/puppet
 Render note: the start script now installs Chrome on service startup and writes the resolved executable path to `.cache/puppeteer/chrome-path.txt`.
 
 GitHub README embeds work best when the image URL is stable and the server can reuse cached screenshots. The endpoint now caches rendered PNGs for one hour to reduce GitHub fetch timeouts.
+
+The screenshot endpoint now captures the full `#repo-content` element again; only the caching and timeout settings remain optimized.
