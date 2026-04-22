@@ -9,13 +9,20 @@ const __dirname = path.dirname(__filename);
 const app = express();
 // The port for our Express server
 const PORT = process.env.PORT || 3000;
-// Where the Vite frontend is running or served from
-// If we are serving the built frontend from express, we might use the local port
-const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
 
 // Serve the static frontend files if they exist in dist/
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
+
+function getPublicBaseUrl(req) {
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL;
+  }
+
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  return `${proto}://${host}`;
+}
 
 app.get('/api/status', async (req, res) => {
   const { repo, period, count } = req.query;
@@ -38,12 +45,13 @@ app.get('/api/status', async (req, res) => {
     await page.setViewport({ width: 1000, height: 1200, deviceScaleFactor: 2 });
     
     // Navigate to the frontend with embed mode
-    let targetUrl = `${FRONTEND_URL}/?repo=${repo}&mode=embed`;
+    const frontendUrl = getPublicBaseUrl(req);
+    let targetUrl = `${frontendUrl}/?repo=${repo}&mode=embed`;
     if (period) targetUrl += `&period=${period}`;
     if (count) targetUrl += `&count=${count}`;
     console.log(`Navigating to ${targetUrl}...`);
     
-    await page.goto(targetUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     // Wait for the repo content container to appear and no longer be loading
     await page.waitForSelector('#repo-content', { timeout: 10000 });
@@ -79,7 +87,7 @@ app.get('/api/status', async (req, res) => {
     
   } catch (error) {
     console.error(`Error generating status image for ${repo}:`, error);
-    res.status(500).send('Error generating status image');
+    res.status(500).send(`Error generating status image: ${error instanceof Error ? error.message : 'unknown error'}`);
   }
 });
 
